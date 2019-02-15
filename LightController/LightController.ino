@@ -8,11 +8,11 @@
 #define AIRCON_PIN 12
 #define BUTTON_PIN 0
 
-char *ssid = "aterm-c832fc-g";
-char *password = "6d277841965f5";
+//char *ssid = "aterm-c832fc-g";
+//char *password = "6d277841965f5";
 
-//char *ssid = "mcr-net-n";
-//char *password = "wifidenpa893";
+char *ssid = "mcr-net-n";
+char *password = "wifidenpa893";
 
 const char *endpoint = "a33axmz8076amo-ats.iot.us-west-2.amazonaws.com";
 const int port = 8883;
@@ -107,7 +107,7 @@ void setup() {
   ledcAttachPin(LIGHT_DOWN_PIN, 1); // 25pin, 1ch
 
   ledcSetup(0, 50, 10);  // 0ch 50 Hz 10bit resolution
-  ledcAttachPin(AIRCON_PIN, 2); // 35pin, 2ch
+  ledcAttachPin(AIRCON_PIN, 2); // 0pin, 2ch
 
   pinMode(BUTTON_PIN, INPUT);
 
@@ -121,6 +121,8 @@ void setup() {
   mqttClient.setCallback(mqttCallback);
 
   connectAWSIoT();
+
+  sendStatus(true); 
 }
 
 void connectAWSIoT() {
@@ -165,16 +167,19 @@ void mqttCallback (char* topic, byte* payload, unsigned int length) {
   JsonObject& state = root["state"];
   if (state.containsKey("lightUp")) {
     strcpy(lightUpState, state["lightUp"]);
+    Serial.print("lightUp -> ");
     Serial.println(lightUpState);
     switchLight(lightUpState, "lightUp");
   }
   else if (state.containsKey("lightDown")) {
     strcpy(lightDownState, state["lightDown"]);
+    Serial.print("lightDown -> ");
     Serial.println(lightDownState);
     switchLight(lightDownState, "lightDown");
   }
   else if (state.containsKey("aircon")) {
     strcpy(airconState, state["aircon"]);
+    Serial.print("aircon -> ");
     Serial.println(airconState);
     switchAircon(airconState);
   }
@@ -228,7 +233,7 @@ void sendStatus(bool isReported) {
   Serial.println(pubTopic);
   Serial.println(pubMessage);
   mqttClient.publish(pubTopic, pubMessage);
-  Serial.println("Published.");
+  Serial.println("Published.\n");
 }
 
 void mqttLoop() {
@@ -237,7 +242,7 @@ void mqttLoop() {
   }
   if (!mqttClient.connected()) {
     connectAWSIoT();
-  /}
+  }
   mqttClient.loop();
 }
 unsigned long beforeTime = millis();
