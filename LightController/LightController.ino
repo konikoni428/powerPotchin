@@ -5,8 +5,8 @@
 
 #define LIGHT_UP_PIN 27
 #define LIGHT_DOWN_PIN 25
-#define AIRCON_PIN 12h
-
+#define AIRCON_PIN 12
+#define BUTTON_PIN 0
 
 char *ssid = "aterm-c832fc-g";
 char *password = "6d277841965f5";
@@ -92,6 +92,11 @@ const char* privateKey = "-----BEGIN RSA PRIVATE KEY-----\n" \
 WiFiClientSecure httpsClient;
 PubSubClient mqttClient(httpsClient);
 
+char pubMessage[128];
+char lightUpState[5] = "OFF";
+char lightDownState[5] = "OFF";
+char airconState[5] = "OFF";
+
 void setup() {
   Serial.begin(115200);
 
@@ -104,17 +109,10 @@ void setup() {
   ledcSetup(0, 50, 10);  // 0ch 50 Hz 10bit resolution
   ledcAttachPin(AIRCON_PIN, 2); // 35pin, 2ch
 
-  // Start WiFi
-  Serial.println("Connecting to ");
-  Serial.print(ssid);
-  WiFi.begin(ssid, password);
+  pinMode(BUTTON_PIN, INPUT);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\nConnected.");
-
+  connectWiFi();
+  
   // Configure MQTT Client
   httpsClient.setCACert(rootCA);
   httpsClient.setCertificate(certificate);
@@ -141,10 +139,18 @@ void connectAWSIoT() {
   }
 }
 
-char pubMessage[128];
-char lightUpState[5] = "OFF";
-char lightDownState[5] = "OFF";
-char airconState[5] = "OFF";
+void connectWiFi(){
+    // Start WiFi
+  Serial.println("Connecting to ");
+  Serial.print(ssid);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected.");
+}
 
 void mqttCallback (char* topic, byte* payload, unsigned int length) {
   const size_t capacity = 3 * JSON_OBJECT_SIZE(1) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + 200;
@@ -172,9 +178,8 @@ void mqttCallback (char* topic, byte* payload, unsigned int length) {
     Serial.println(airconState);
     switchAircon(airconState);
   }
-  sendStatus();
+  sendStatus(true);
 }
-
 
 void switchLight(char* state, char* deviceName) {
   int ch;
@@ -196,18 +201,29 @@ void switchLight(char* state, char* deviceName) {
 void switchAircon(char* state){
   int ch = 2;
   if(!strcmp(state, "OFF")){
-    ledcWrite(ch, 70);
+    ledcWrite(ch, 67);
     delay(150);
     ledcWrite(ch, 0);
   }else{
-    ledcWrite(ch, 100);
+    ledcWrite(ch, 103);
     delay(150);
     ledcWrite(ch, 0);
   }
 }
 
-void sendStatus() {
-  sprintf(pubMessage, "{\"state\": {\"reported\": {\"lightUp\": \"%s\",\"lightDown\": \"%s\",\"aircon\": \"%s\"}}}", lightUpState, lightDownState, airconState);
+void sendStatus(bool isReported) {
+  if(isReported){
+    sprintf(pubMessage, "{\"state\": {\"reported\": {\"lightUp\": \"%s\",\"lightDown\": \"%s\",\"aircon\": \"%s\"}}}", lightUpState, lightDownState, airconState);
+  }else{
+    char next[5];
+    if(!strcmp(lightUpState, "OFF")){
+      sprintf(next, "ON");
+    }else{
+      sprintf(next, "OFF");
+    }
+    sprintf(pubMessage, "{\"state\": {\"desired\": {\"lightUp\": \"%s\",\"lightDown\": \"%s\",\"aircon\": \"%s\"}}}", (char*)next, next, next);
+  }
+  
   Serial.print("Publishing message to topic ");
   Serial.println(pubTopic);
   Serial.println(pubMessage);
@@ -216,12 +232,19 @@ void sendStatus() {
 }
 
 void mqttLoop() {
+  if(WiFi.status() != WL_CONNECTED){
+    connectWiFi();
+  }
   if (!mqttClient.connected()) {
     connectAWSIoT();
-  }
+  /}
   mqttClient.loop();
 }
-
+unsigned long beforeTime = millis();
 void loop() {
   mqttLoop();
+  if(digitalRead(BUTTON_PIN) == LOW && millis() - beforeTime > 5000){
+    sendStatus(false);
+    beforeTime = millis();
+  }
 }
