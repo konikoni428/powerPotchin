@@ -8,7 +8,7 @@ iot = boto3.client('iot-data')
 
 def publish(device_name, state):
     if device_name == "smartLock":
-        topic = '$aws/things/badegg/shadow/update'
+        topic = '$aws/things/raspberryPi/shadow/update'
     else:
         topic = '$aws/things/LightController/shadow/update'
     payload = {
@@ -28,7 +28,7 @@ def publish(device_name, state):
 
 def read_state(device_name):
     if device_name == "smartLock":
-        state = iot.get_thing_shadow(thingName="badegg")
+        state = iot.get_thing_shadow(thingName="raspberryPi")
     else:
         state = iot.get_thing_shadow(thingName="LightController")
 

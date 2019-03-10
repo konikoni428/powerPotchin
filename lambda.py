@@ -315,7 +315,7 @@ def handle_non_discovery_v3(request):
                 "context": {
                     "properties": [{
                         "namespace": "Alexa.LockController" if request_device == "smartLock" else "Alexa.PowerController",
-                        "name": "powerState",
+                        "name": "lockState" if request_device == "smartLock" else "powerState",
                         "value": iot.read_state(request_device),
                         "timeOfSample": get_utc_timestamp(),
                         "uncertaintyInMilliseconds": 500
