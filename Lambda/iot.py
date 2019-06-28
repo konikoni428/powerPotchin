@@ -4,13 +4,12 @@ import json
 import boto3
 
 iot = boto3.client('iot-data')
-
-
+with open('config.json') as f:
+    config = json.load(f)
+    things_name = config['thingsName']
+    
 def publish(device_name, state):
-    if device_name == "smartLock":
-        topic = '$aws/things/raspberryPi/shadow/update'
-    else:
-        topic = '$aws/things/LightController/shadow/update'
+    topic = f'$aws/things/{things_name}/shadow/update'
     payload = {
         "state": {
             "desired": {
@@ -27,10 +26,7 @@ def publish(device_name, state):
 
 
 def read_state(device_name):
-    if device_name == "smartLock":
-        state = iot.get_thing_shadow(thingName="raspberryPi")
-    else:
-        state = iot.get_thing_shadow(thingName="LightController")
+    state = iot.get_thing_shadow(thingName=things_name)
 
     payload = state["payload"].read().decode('utf-8')
     shadow = json.loads(payload)

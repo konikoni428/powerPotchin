@@ -1,0 +1,67 @@
+{
+    "DEVICES_CAPABILITY": [
+        {
+            "endpointId": "lightUp",
+            "friendlyName": "上の電気（呼び出しに必要な名前）",
+            "description": "説明（AlexaAppに表示)",
+            "manufacturerName": "your name",
+            "displayCategories": [
+                "LIGHT"
+            ],
+            "cookie": {
+                "extraDetail1": "optionalDetailForSkillAdapterToReferenceThisDevice"
+            },
+            "capabilities": [
+                {
+                    "type": "AlexaInterface",
+                    "interface": "Alexa.PowerController",
+                    "version": "3",
+                    "properties": {
+                        "supported": [{
+                            "name": "powerState"
+                        }],
+                        "proactivelyReported": true,
+                        "retrievable": true
+                    }
+                },
+                {
+                    "type": "AlexaInterface",
+                    "interface": "Alexa",
+                    "version": "3"
+                }
+            ]
+        },
+        {
+            "endpointId": "lightDown",
+            "friendlyName": "下の電気",
+            "description": "部屋の下の電気",
+            "manufacturerName": "your name",
+            "displayCategories": [
+                "LIGHT"
+            ],
+            "cookie": {
+                "extraDetail1": "optionalDetailForSkillAdapterToReferenceThisDevice"
+            },
+            "capabilities": [
+                {
+                    "type": "AlexaInterface",
+                    "interface": "Alexa.PowerController",
+                    "version": "3",
+                    "properties": {
+                        "supported": [{
+                            "name": "powerState"
+                        }],
+                        "proactivelyReported": true,
+                        "retrievable": true
+                    }
+                },
+                {
+                    "type": "AlexaInterface",
+                    "interface": "Alexa",
+                    "version": "3"
+                }
+            ]
+        }
+    ],
+    "thingsName": "powerPotchinThings"
+}
